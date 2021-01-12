@@ -28,4 +28,18 @@ Between an open debuggable inspectable system and a closed polished sellable sys
 5. `cargo build --release` and ship a single `.exe` file (`PE32+`, `ELF`, and `MACH-O` binaries output)
 
 
+# No seriously, how does it work?
+
+`system-system` is a Rust procedural macro. This means when you call `system!()`
+it generates code based on the arguments passed and the files in your repository.
+
+These files are archived into a tarball, which gets linked into the compiled binary as a static library.
+When the compiled binary is run on a user's machine, the tarball is extracted to `$HOME/._system_APPNAME/`.
+
+After extraction, your code will be run. Java classes will be run using an embedded JVM which is downloaded during compile time,
+Python is run the same way. Things like JVM arguments and envrionment variables are specified using the `system!()` macro arguments.
+
+`system-system` also provides helper logic for IPC mechanisms like `sqlite3` database files, so you can write a schema and ensure all
+programs will see that database when they start.
+
 
