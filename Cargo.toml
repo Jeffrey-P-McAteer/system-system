@@ -12,3 +12,4 @@ proc-macro = true
 syn = {version = "1.0.58", features = ["full"]}
 quote = "0.6.10"
 
+rust-embed = "5.8.0"

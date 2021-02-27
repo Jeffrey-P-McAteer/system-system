@@ -25,6 +25,7 @@ use syn::{
 
 // These follow the system!() arguments
 // for different embedded program types.
+#[derive(Debug)]
 enum Program {
   Java {
     classpath: Vec<String>,
@@ -99,15 +100,6 @@ impl Parse for ProgramDef {
       }
     }
 
-    // input.parse::<Token![static]>()?;
-    // input.parse::<Token![ref]>()?;
-    // let name: Ident = input.parse()?;
-    // input.parse::<Token![:]>()?;
-    // let ty: Type = input.parse()?;
-    // input.parse::<Token![=]>()?;
-    // let init: Expr = input.parse()?;
-    // input.parse::<Token![;]>()?;
-
     Ok(ProgramDef {
         type_name: type_name.to_string(),
         programs: programs,
@@ -119,15 +111,23 @@ impl Parse for ProgramDef {
 pub fn system(item: TokenStream) -> TokenStream {
     let prog: ProgramDef = parse_macro_input!(item as ProgramDef);
 
+    // Iterate programs, build app directory
+    for p in prog.programs {
+      println!("[BUILD] got program {:?}", p);
+      // TODO
+    }
+
+    
+
     let struct_def = format!(r#"
       pub struct {type_name};
 
       impl {type_name} {{
         pub fn extract(&mut self) {{
-
+          println!("[RUN] TODO extract() data");
         }}
         pub fn run(&mut self) {{
-
+          println!("[RUN] TODO run()");
         }}
       }}
 
