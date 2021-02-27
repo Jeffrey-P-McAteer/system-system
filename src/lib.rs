@@ -3,6 +3,7 @@ use proc_macro;
 use proc_macro::TokenStream;
 
 use std::path::{PathBuf};
+use std::process::{Command, Stdio};
 
 use quote::{quote, quote_spanned};
 use syn::parse::{Parse, ParseStream, Result};
@@ -28,6 +29,9 @@ use syn::{
 #[derive(Debug)]
 enum Program {
   Java {
+    build_cwd: String,
+    build_cmd: Vec<String>,
+
     classpath: Vec<String>,
     classname: String,
   },
@@ -70,6 +74,22 @@ impl Parse for ProgramDef {
 
         let block_content: ParseBuffer;
         let brace_token = braced!(block_content in input);
+
+        let build_cwd = block_content.parse::<LitStr>()?;
+
+        block_content.parse::<Token![,]>()?;
+
+        let build_cmd_tokens = block_content.parse::<ExprArray>()?;
+        let mut build_cmd = vec![];
+        for elm in build_cmd_tokens.elems {
+          if let Expr::Lit(expr_lit) = elm {
+            if let Lit::Str(l_str) = expr_lit.lit {
+              build_cmd.push(l_str.value());
+            }
+          }
+        }
+
+        block_content.parse::<Token![,]>()?;
         
         let classpath_tokens = block_content.parse::<ExprArray>()?;
         let mut classpath = vec![];
@@ -90,6 +110,8 @@ impl Parse for ProgramDef {
         }
 
         let mut p = Program::Java {
+          build_cwd: build_cwd.value(),
+          build_cmd: build_cmd,
           classpath: classpath,
           classname: classname.value(),
         };
@@ -114,7 +136,28 @@ pub fn system(item: TokenStream) -> TokenStream {
     // Iterate programs, build app directory
     for p in prog.programs {
       println!("[BUILD] got program {:?}", p);
-      // TODO
+      match p {
+        Program::Java{build_cwd, build_cmd, classpath, classname} => {
+          let cmd_s = Command::new(&build_cmd[0])
+                        .args(&build_cmd[1..])
+                        .stdin(Stdio::inherit())
+                        .stdout(Stdio::inherit())
+                        .stderr(Stdio::inherit())
+                        .current_dir(&build_cwd)
+                        .status()
+                        .expect("Could not run process to compile java classes");
+
+          if !cmd_s.success() {
+            eprintln!("[BUILD] Error running: {:?} process returned {:?}", &build_cmd, cmd_s.code());
+            panic!("system-system cannot continue because a sub-process failed");
+          }
+
+
+        }
+        unk => {
+          println!("[BUILD] Error, unhandled program p={:?}", unk);
+        }
+      }
     }
 
     

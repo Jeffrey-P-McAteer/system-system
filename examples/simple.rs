@@ -24,6 +24,10 @@ EOF
 system!{
   MyApp,
   java {
+    // Build data
+    "/tmp/classes",
+    ["javac", "Main.java"],
+    // Run data (incl. all directories with asset files)
     ["/tmp/classes/"],
     "Main",
   }
